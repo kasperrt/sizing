@@ -16,6 +16,18 @@ $(document).on("submit", "#website-form", function(e) {
 
     var website = $(".input-website").val();
 
+    if(!website.endsWith("/")) website = website + "/";
+    total_bytes = 0;
+    images_bytes = 0;
+    css_bytes = 0;
+    js_bytes = 0;
+    html_bytes = 0;
+    font_bytes = 0;
+    visited = [];
+    full_css = "";
+    full_html = "";
+    fonts = {};
+
     get_full_html(website);
 });
 
