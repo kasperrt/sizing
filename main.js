@@ -126,7 +126,11 @@ function get_size_css(url, response) {
             }
             var absolute = relativeOrAbsolute(href);
             if(!absolute) {
-                href = url + href;
+                if(href.startsWith("/")) {
+                    href = get_root_url(url) + href;
+                } else {
+                    href = url + href;
+                }
             }
             get_size_html(href, object_is);
 
@@ -204,6 +208,7 @@ function get_external_from_css(url, original_url) {
                     if(!new_link.startsWith("/")) {
                         new_link = "/" + new_link;
                     }
+                    original_url = get_root_url(original_url);
                     get_size_html(original_url + new_link, object_is);
                     continue;
                 } else if(!new_link.startsWith("data")){
@@ -220,6 +225,20 @@ function get_external_from_css(url, original_url) {
             }
         }
     });
+}
+
+function get_root_url(url) {
+    var index = 0;
+    if(url.startsWith("https://")) {
+        index = 8;
+    } else {
+        index = 7;
+    }
+    var indexOf = url.substring(index);
+
+    var indexOfNum = indexOf.indexOf("/");
+    if(indexOfNum == -1) return url;
+    return url.substring(0, indexOfNum + index);
 }
 
 function get_size_js(url, response) {
@@ -245,10 +264,16 @@ function get_size_js(url, response) {
         if(src.substring(0,2) == "//") {
             src = "http:" + src;
         }
+
         var absolute = relativeOrAbsolute(src);
         if(!absolute) {
-            src = url + src;
+            if(src.startsWith("/")) {
+                src = get_root_url(url) + src;
+            } else {
+                src = url + src;
+            }
         }
+
         get_size_html(src, object_is);
     });
 }
@@ -275,9 +300,14 @@ function get_size_images(url, response) {
         if(src.substring(0,2) == "//") {
             src = "http:" + src;
         }
+
         var absolute = relativeOrAbsolute(src);
         if(!absolute) {
-            src = url + src;
+            if(src.startsWith("/")) {
+                src = get_root_url(url) + src;
+            } else {
+                src = url + src;
+            }
         }
         get_size_html(src, object_is);
     });
