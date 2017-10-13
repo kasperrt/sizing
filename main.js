@@ -4,6 +4,10 @@ var css_bytes = 0;
 var js_bytes = 0;
 var html_bytes = 0;
 var font_bytes = 0;
+var visited = [];
+var full_css = "";
+var full_html = "";
+var fonts = {};
 
 $(".input-website").focus();
 
@@ -15,7 +19,9 @@ $(document).on("submit", "#website-form", function(e) {
     get_full_html(website);
 });
 
-function get_size_html(url, object_is) {
+function get_size_html(url, object_is, next, args) {
+    if(visited.indexOf(url) > -1) return;
+    visited.push(url);
     var xhr = $.ajax({
         type: "HEAD",
         url: "http://127.0.0.1:8080/" + url,
@@ -43,7 +49,29 @@ function get_size_html(url, object_is) {
                         } else if(object_is.js) {
                             js_bytes = js_bytes + parseInt(_kb);
                         } else if(object_is.font) {
-                            font_bytes = font_bytes + parseInt(_kb);
+                            var font_name = url.substring(url.lastIndexOf("/") + 1);
+                            if(font_name.endsWith("woff2") && fonts.hasOwnProperty(font_name.substring(0, font_name.length - 1))) {
+                                var woff = font_name.substring(0, font_name.length - 1);
+                                font_bytes = font_bytes - fonts[woff];
+                                total_bytes = total_bytes - fonts[woff];
+                                delete fonts[woff];
+                            } else if(font_name.endsWith("woff2") && fonts.hasOwnProperty(font_name.substring(0, font_name.length - 5) + "eof")) {
+                                var eof = font_name.substring(0, font_name.length - 5) + "eof";
+                                font_bytes = font_bytes - fonts[eof];
+                                total_bytes = total_bytes - fonts[eof];
+                                delete fonts[eof];
+                            } else if(font_name.endsWith("woff2") && fonts.hasOwnProperty(font_name.substring(0, font_name.length - 5) + "eof")) {
+                                var ttf = font_name.substring(0, font_name.length - 5) + "ttf";
+                                font_bytes = font_bytes - fonts[ttf];
+                                total_bytes = total_bytes - fonts[tff];
+                                delete fonts[ttf];
+                            } else if(font_name.endsWith("woff") && fonts.hasOwnProperty(font_name + "2")) {
+                                return;
+                            } else if((font_name.endsWith("eot") || font_name.endsWith("ttf")) && fonts.hasOwnProperty(font_name.substring(0, font_name.length - 3) + "woff2")) {
+                                return;
+                            }
+                            fonts[font_name] = kb;
+                            font_bytes = font_bytes + parseInt(kb);
                         }
                         console.log("");
                         console.log("Image:", formatBytes(images_bytes, 3));
@@ -58,8 +86,6 @@ function get_size_html(url, object_is) {
                 });
             } else {
                 //console.log(url, kb);
-                total_bytes = total_bytes + parseInt(kb);
-
                 if(object_is.image) {
                     images_bytes = images_bytes + parseInt(kb);
                 } else if(object_is.css) {
@@ -69,8 +95,33 @@ function get_size_html(url, object_is) {
                 } else if(object_is.js) {
                     js_bytes = js_bytes + parseInt(kb);
                 } else if(object_is.font) {
+                    var font_name = url.substring(url.lastIndexOf("/") + 1);
+                    if(font_name.endsWith("woff2") && fonts.hasOwnProperty(font_name.substring(0, font_name.length - 1))) {
+                        var woff = font_name.substring(0, font_name.length - 1);
+                        font_bytes = font_bytes - fonts[woff];
+                        total_bytes = total_bytes - fonts[woff];
+                        delete fonts[woff];
+                    } else if(font_name.endsWith("woff2") && fonts.hasOwnProperty(font_name.substring(0, font_name.length - 5) + "eof")) {
+                        var eof = font_name.substring(0, font_name.length - 5) + "eof";
+                        font_bytes = font_bytes - fonts[eof];
+                        total_bytes = total_bytes - fonts[eof];
+                        delete fonts[eof];
+                    } else if(font_name.endsWith("woff2") && fonts.hasOwnProperty(font_name.substring(0, font_name.length - 5) + "eof")) {
+                        var ttf = font_name.substring(0, font_name.length - 5) + "ttf";
+                        font_bytes = font_bytes - fonts[ttf];
+                        total_bytes = total_bytes - fonts[tff];
+                        delete fonts[ttf];
+                    } else if(font_name.endsWith("woff") && fonts.hasOwnProperty(font_name + "2")) {
+                        return;
+                    } else if((font_name.endsWith("eot") || font_name.endsWith("ttf")) && fonts.hasOwnProperty(font_name.substring(0, font_name.length - 3) + "woff2")) {
+                        return;
+                    }
+                    fonts[font_name] = kb;
                     font_bytes = font_bytes + parseInt(kb);
                 }
+
+                total_bytes = total_bytes + parseInt(kb);
+
                 console.log("");
                 console.log("Image:", formatBytes(images_bytes, 3));
                 console.log("Html:", formatBytes(html_bytes, 3));
@@ -80,6 +131,10 @@ function get_size_html(url, object_is) {
                 console.log("Total:", formatBytes(total_bytes,3));
 
                 change_sizes();
+
+                if(typeof(next) == "function") {
+                    next(args[0], args[1]);
+                }
             }
         }
     });
@@ -91,7 +146,13 @@ function change_sizes() {
     $(".js").width(js_bytes / total_bytes * 100 + "%");
     $(".font").width(font_bytes / total_bytes * 100 + "%");
     $(".image").width(images_bytes / total_bytes * 100 + "%");
-    console.log(total_bytes, html_bytes);
+
+    $(".font-size").text(formatBytes(font_bytes, 3));
+    $(".html-size").text(formatBytes(html_bytes, 3));
+    $(".css-size").text(formatBytes(css_bytes, 3));
+    $(".image-size").text(formatBytes(images_bytes, 3));
+    $(".js-size").text(formatBytes(js_bytes, 3));
+    $(".total-size").text(formatBytes(total_bytes, 3));
 }
 
 function get_full_html(url) {
@@ -107,6 +168,7 @@ function get_full_html(url) {
         type: "GET",
         url: "http://127.0.0.1:8080/" + url,
         success: function(response){
+            full_html = response;
             get_size_html(url, object_is);
             get_size_css(url, response);
             get_size_images(url, response);
@@ -145,9 +207,7 @@ function get_size_css(url, response) {
                     href = url + href;
                 }
             }
-            get_size_html(href, object_is);
-
-            get_external_from_css(href, url);
+            get_size_html(href, object_is, get_external_from_css, [href, url]);
         }
     });
 }
@@ -177,6 +237,10 @@ function get_external_from_css(url, original_url) {
 
                 var next_par = curr_place.indexOf(")");
                 var new_link = curr_place.substring(4, next_par);
+                var index_q = new_link.indexOf("?");
+                if(index_q > -1) {
+                    new_link = new_link.substring(0, index_q);
+                }
 
                 if(display_none_test.indexOf("display:none") > -1 || display_none_test.indexOf("display: none") > -1) {
                     continue;
@@ -184,7 +248,9 @@ function get_external_from_css(url, original_url) {
 
                 if(new_link.substring(0, 1) == "\"" || new_link.substring(0, 1) == "'") {
                     new_link = new_link.substring(1);
-                    new_link = new_link.substring(0, new_link.length - 1);
+                    if(new_link.endsWith("\"") || new_link.endsWith("'")) {
+                        new_link = new_link.substring(0, new_link.length - 1);
+                    }
                 }
 
                 if(new_link.indexOf(".eot") > -1 || new_link.indexOf(".woff") > -1 || new_link.indexOf(".ttf") > -1) {
@@ -201,6 +267,39 @@ function get_external_from_css(url, original_url) {
                     css: is_css,
                     js: false,
                     html: false,
+                }
+
+                if(is_font) {
+                    display_none_test = display_none_test.replace(/\s/g,'');
+                    var font_family_index = display_none_test.indexOf("font-family") + 1;
+                    var sub = display_none_test.substring(font_family_index);
+                    var end_index = sub.indexOf(";");
+                    var font_family = display_none_test.substring(font_family_index + 12, end_index + 1);
+                    var response_class = response.substring(0, last_curly_index);
+                    var _class = response_class.lastIndexOf(".");
+                    var new_sub = response_class.substring(_class);
+
+                    if(occurrences(response, font_family) < 2 && occurrences(full_css, font_family) < 2) {
+                        continue;
+                    }
+                } else if(is_image) {
+                    var response_class = response.substring(0, last_curly_index);
+                    var _class = response_class.lastIndexOf(".");
+                    var new_sub = response_class.substring(_class);
+
+                    if(new_sub.indexOf("#") > -1) {
+                        var response_class = response.substring(0, last_curly_index);
+                        var _id = response_class.lastIndexOf("#");
+                        var new_sub = response_class.substring(_id);
+
+                        if(occurrences(full_html, new_sub.substring(1) < 1)) {
+                            continue;
+                        }
+                    } else {
+                        if(occurrences(full_html, new_sub.substring(1) < 1)) {
+                            continue;
+                        }
+                    }
                 }
 
                 if(new_link.startsWith("..")) {
@@ -238,6 +337,26 @@ function get_external_from_css(url, original_url) {
             }
         }
     });
+}
+
+function occurrences(string, subString, allowOverlapping) {
+
+    string += "";
+    subString += "";
+    if (subString.length <= 0) return (string.length + 1);
+
+    var n = 0,
+        pos = 0,
+        step = allowOverlapping ? 1 : subString.length;
+
+    while (true) {
+        pos = string.indexOf(subString, pos);
+        if (pos >= 0) {
+            ++n;
+            pos += step;
+        } else break;
+    }
+    return n;
 }
 
 function get_root_url(url) {
