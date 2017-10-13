@@ -52,6 +52,8 @@ function get_size_html(url, object_is) {
                         console.log("JS:", formatBytes(js_bytes, 3));
                         console.log("Font:", formatBytes(font_bytes, 3));
                         console.log("Total:", formatBytes(total_bytes,3));
+
+                        change_sizes();
                     }
                 });
             } else {
@@ -76,9 +78,20 @@ function get_size_html(url, object_is) {
                 console.log("JS:", formatBytes(js_bytes, 3));
                 console.log("Font:", formatBytes(font_bytes, 3));
                 console.log("Total:", formatBytes(total_bytes,3));
+
+                change_sizes();
             }
         }
     });
+}
+
+function change_sizes() {
+    $(".html").width(html_bytes / total_bytes * 100 + "%");
+    $(".css").width(css_bytes / total_bytes * 100 + "%");
+    $(".js").width(js_bytes / total_bytes * 100 + "%");
+    $(".font").width(font_bytes / total_bytes * 100 + "%");
+    $(".image").width(images_bytes / total_bytes * 100 + "%");
+    console.log(total_bytes, html_bytes);
 }
 
 function get_full_html(url) {
