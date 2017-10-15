@@ -8,6 +8,11 @@ var visited = [];
 var full_css = "";
 var full_html = "";
 var fonts = {};
+var css_links = [];
+var html_links = [];
+var image_links = [];
+var font_links = [];
+var js_links = [];
 
 $(".input-website").focus();
 

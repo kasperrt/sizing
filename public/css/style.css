@@ -28,9 +28,16 @@ html {
     text-transform: uppercase;
 }
 
+.total {
+    font-family: Helvetica;
+    color: rgba(0,0,0,.6);
+    margin-top: 5px;
+}
+
 .info-boxes {
     display: flex;
     width: 80%;
+    margin-bottom: 5px;
     justify-content: space-around;
     font-family: Helvetica;
     color: rgba(0,0,0,.6);
