@@ -7,6 +7,7 @@ var font_bytes = 0;
 var visited = [];
 var full_css = "";
 var full_html = "";
+var elements = {};
 var fonts = {};
 var css_links = [];
 var html_links = [];
@@ -69,7 +70,7 @@ $(document).on("mouseenter", ".bar div", function(e){
         }
 
         for(var i = 0; i < text_content.length; i++) {
-            $(".explanation-container").append("<a target='_blank' href='" + text_content[i] + "'>" + text_content[i] + "</a>");
+            $(".explanation-container").append("<a target='_blank' href='" + text_content[i] + "'>" + text_content[i] + " - " + formatBytes(elements[text_content[i]],3) + "</a>");
         }
 
         if(left + $(".explanation-container").width() > $(window).width()) {
@@ -205,6 +206,8 @@ function handle_responses(kb, url, object_is, next, args) {
         fonts[font_name] = kb;
         font_bytes = font_bytes + parseInt(kb);
     }
+
+    elements[url] = kb;
 
     total_bytes = total_bytes + parseInt(kb);
 
