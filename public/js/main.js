@@ -120,7 +120,7 @@ function get_size_html(url, object_is, next, args) {
     visited.push(url);
     var xhr = $.ajax({
         type: "HEAD",
-        url: "http://127.0.0.1:8080/" + url,
+        url: "http://" + window.location.hostname + ":8085/" + url,
         cache: false,
         "cf-cache": false,
         success: function(msg){
@@ -130,7 +130,7 @@ function get_size_html(url, object_is, next, args) {
             if(bytes == undefined) {
                 $.ajax({
                     type: "GET",
-                    url: "http://127.0.0.1:8080/" + url,
+                    url: "http://" + window.location.hostname + ":8085/" + url,
                     success: function(response){
                         var _kb = encodeURI(response).split(/%..|./).length - 1;
                         //console.log(url, _kb);
@@ -241,7 +241,7 @@ function get_full_html(url) {
 
     $.ajax({
         type: "GET",
-        url: "http://127.0.0.1:8080/" + url,
+        url: "http://" + window.location.hostname + ":8085/" + url,
         success: function(response){
             full_html = response;
             get_size_html(url, object_is);
@@ -290,7 +290,7 @@ function get_size_css(url, response) {
 function get_external_from_css(url, original_url) {
     $.ajax({
         type: "GET",
-        url: "http://127.0.0.1:8080/" + url,
+        url: "http://" + window.location.hostname + ":8085/" + url,
         success: function(response) {
             var regex = /url\(/gi, result, indices = [];
             while ( (result = regex.exec(response)) ) {
