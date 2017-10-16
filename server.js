@@ -1,10 +1,10 @@
 var host = process.env.PORT ? '0.0.0.0' : '127.0.0.1';
-var port = process.env.PORT || 8080;
+var port = process.env.PORT || 8085;
 var express = require('express');
 var app = express();
 var cors_proxy = require('cors-anywhere');
 var path = require('path');
-app.set('port', 3000);
+app.set('port', 3002);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
