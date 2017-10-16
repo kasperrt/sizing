@@ -109,3 +109,26 @@ input:focus, textarea:focus {
 .js, .js-box {
     background: #598FC2;
 }
+
+.explanation-container {
+    border: 1px solid #63625c;
+    position: absolute;
+    font-family: Helvetica;
+    display: flex;
+    flex-direction: column;
+    background: #f8f4e6;
+    border-radius: 3px;
+    padding-top: 5px;
+    overflow: auto;
+    max-height: 35vh;
+}
+
+.explanation-container a {
+    padding: 2.5px;
+    color: #383a3a;
+    text-decoration: none;
+}
+
+.hide {
+    display: none;
+}

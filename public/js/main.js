@@ -13,15 +13,17 @@ var html_links = [];
 var image_links = [];
 var font_links = [];
 var js_links = [];
+var started = false;
 
 $(".input-website").focus();
 
 $(document).on("submit", "#website-form", function(e) {
     e.preventDefault();
-
+    started = true;
     var website = $(".input-website").val();
 
     if(!website.endsWith("/")) website = website + "/";
+
     total_bytes = 0;
     images_bytes = 0;
     css_bytes = 0;
@@ -29,12 +31,89 @@ $(document).on("submit", "#website-form", function(e) {
     html_bytes = 0;
     font_bytes = 0;
     visited = [];
+    js_links = [];
+    image_links = [];
+    html_links = [];
+    css_links = [];
+    font_links = [];
     full_css = "";
     full_html = "";
     fonts = {};
 
     get_full_html(website);
 });
+
+$(document).on("mouseenter", ".bar div", function(e){
+    if(started) {
+        $(".explanation-container").empty();
+        $(".explanation-container").removeClass("hide");
+        var position = $(this).position();
+        var width = $(this).width();
+        var height = $(this).height();
+        var top = position.top + height;
+        var left = position.left;
+
+
+        var text_content = [];
+        var element = $(this).attr("class");
+        if(element == "js") {
+            text_content = js_links;
+        } else if(element == "html") {
+            text_content = html_links;
+        } else if(element == "css") {
+            text_content = css_links;
+        } else if(element == "font") {
+            text_content = font_links;
+        } else if(element == "image") {
+            text_content = image_links;
+        }
+
+        for(var i = 0; i < text_content.length; i++) {
+            $(".explanation-container").append("<a target='_blank' href='" + text_content[i] + "'>" + text_content[i] + "</a>");
+        }
+
+        if(left + $(".explanation-container").width() > $(window).width()) {
+            left = $(window).width() - $(".explanation-container").width();
+        }
+
+        $(".explanation-container").css('top', top);
+        $(".explanation-container").css('left', left);
+    }
+});
+
+
+$(document).on("mousemove", ".bar div", function(e) {
+    var position = $(this).position();
+    var width = $(this).width();
+    var height = $(this).height();
+    var top = position.top + height;
+    var left = e.pageX - $(".explanation-container").width() / 2;
+
+    if(left + $(".explanation-container").width() > $(window).width()) {
+        left = $(window).width() - $(".explanation-container").width();
+    } else if(left < 0) {
+        left = 0;
+    }
+
+    $(".explanation-container").css('top', top);
+    $(".explanation-container").css('left', left);
+});
+
+$(document).on("mouseleave", ".bar div", function(e) {
+    var related = $(e.relatedTarget);
+    if(related.hasClass("explanation-container")) return;
+    if(!$(".explanation-container").hasClass("hide")) {
+        $(".explanation-container").addClass("hide")
+    }
+});
+
+$(document).on("mouseleave", ".explanation-container", function(e) {
+    var related = $(e.relatedTarget);
+    if(related.hasClass("image")) return;
+    if(!$(".explanation-container").hasClass("hide")) {
+        $(".explanation-container").addClass("hide")
+    }
+})
 
 function get_size_html(url, object_is, next, args) {
     if(visited.indexOf(url) > -1) return;
@@ -55,106 +134,85 @@ function get_size_html(url, object_is, next, args) {
                     success: function(response){
                         var _kb = encodeURI(response).split(/%..|./).length - 1;
                         //console.log(url, _kb);
-                        total_bytes = total_bytes + parseInt(_kb);
 
-                        if(object_is.image) {
-                            images_bytes = images_bytes + parseInt(_kb);
-                        } else if(object_is.css) {
-                            css_bytes = css_bytes + parseInt(_kb);
-                        } else if(object_is.html) {
-                            html_bytes = html_bytes + parseInt(_kb);
-                        } else if(object_is.js) {
-                            js_bytes = js_bytes + parseInt(_kb);
-                        } else if(object_is.font) {
-                            var font_name = url.substring(url.lastIndexOf("/") + 1);
-                            if(font_name.endsWith("woff2") && fonts.hasOwnProperty(font_name.substring(0, font_name.length - 1))) {
-                                var woff = font_name.substring(0, font_name.length - 1);
-                                font_bytes = font_bytes - fonts[woff];
-                                total_bytes = total_bytes - fonts[woff];
-                                delete fonts[woff];
-                            } else if(font_name.endsWith("woff2") && fonts.hasOwnProperty(font_name.substring(0, font_name.length - 5) + "eof")) {
-                                var eof = font_name.substring(0, font_name.length - 5) + "eof";
-                                font_bytes = font_bytes - fonts[eof];
-                                total_bytes = total_bytes - fonts[eof];
-                                delete fonts[eof];
-                            } else if(font_name.endsWith("woff2") && fonts.hasOwnProperty(font_name.substring(0, font_name.length - 5) + "eof")) {
-                                var ttf = font_name.substring(0, font_name.length - 5) + "ttf";
-                                font_bytes = font_bytes - fonts[ttf];
-                                total_bytes = total_bytes - fonts[tff];
-                                delete fonts[ttf];
-                            } else if(font_name.endsWith("woff") && fonts.hasOwnProperty(font_name + "2")) {
-                                return;
-                            } else if((font_name.endsWith("eot") || font_name.endsWith("ttf")) && fonts.hasOwnProperty(font_name.substring(0, font_name.length - 3) + "woff2")) {
-                                return;
-                            }
-                            fonts[font_name] = kb;
-                            font_bytes = font_bytes + parseInt(kb);
-                        }
-                        console.log("");
-                        console.log("Image:", formatBytes(images_bytes, 3));
-                        console.log("Html:", formatBytes(html_bytes, 3));
-                        console.log("CSS:", formatBytes(css_bytes, 3));
-                        console.log("JS:", formatBytes(js_bytes, 3));
-                        console.log("Font:", formatBytes(font_bytes, 3));
-                        console.log("Total:", formatBytes(total_bytes,3));
-
-                        change_sizes();
+                        handle_responses(_kb, url, object_is, next, args);
                     }
                 });
             } else {
-                //console.log(url, kb);
-                if(object_is.image) {
-                    images_bytes = images_bytes + parseInt(kb);
-                } else if(object_is.css) {
-                    css_bytes = css_bytes + parseInt(kb);
-                } else if(object_is.html) {
-                    html_bytes = html_bytes + parseInt(kb);
-                } else if(object_is.js) {
-                    js_bytes = js_bytes + parseInt(kb);
-                } else if(object_is.font) {
-                    var font_name = url.substring(url.lastIndexOf("/") + 1);
-                    if(font_name.endsWith("woff2") && fonts.hasOwnProperty(font_name.substring(0, font_name.length - 1))) {
-                        var woff = font_name.substring(0, font_name.length - 1);
-                        font_bytes = font_bytes - fonts[woff];
-                        total_bytes = total_bytes - fonts[woff];
-                        delete fonts[woff];
-                    } else if(font_name.endsWith("woff2") && fonts.hasOwnProperty(font_name.substring(0, font_name.length - 5) + "eof")) {
-                        var eof = font_name.substring(0, font_name.length - 5) + "eof";
-                        font_bytes = font_bytes - fonts[eof];
-                        total_bytes = total_bytes - fonts[eof];
-                        delete fonts[eof];
-                    } else if(font_name.endsWith("woff2") && fonts.hasOwnProperty(font_name.substring(0, font_name.length - 5) + "eof")) {
-                        var ttf = font_name.substring(0, font_name.length - 5) + "ttf";
-                        font_bytes = font_bytes - fonts[ttf];
-                        total_bytes = total_bytes - fonts[tff];
-                        delete fonts[ttf];
-                    } else if(font_name.endsWith("woff") && fonts.hasOwnProperty(font_name + "2")) {
-                        return;
-                    } else if((font_name.endsWith("eot") || font_name.endsWith("ttf")) && fonts.hasOwnProperty(font_name.substring(0, font_name.length - 3) + "woff2")) {
-                        return;
-                    }
-                    fonts[font_name] = kb;
-                    font_bytes = font_bytes + parseInt(kb);
-                }
-
-                total_bytes = total_bytes + parseInt(kb);
-
-                console.log("");
-                console.log("Image:", formatBytes(images_bytes, 3));
-                console.log("Html:", formatBytes(html_bytes, 3));
-                console.log("CSS:", formatBytes(css_bytes, 3));
-                console.log("JS:", formatBytes(js_bytes, 3));
-                console.log("Font:", formatBytes(font_bytes, 3));
-                console.log("Total:", formatBytes(total_bytes,3));
-
-                change_sizes();
-
-                if(typeof(next) == "function") {
-                    next(args[0], args[1]);
-                }
+                handle_responses(kb, url, object_is, next, args);
             }
         }
     });
+}
+
+function handle_responses(kb, url, object_is, next, args) {
+    //console.log(url, kb);
+    if(object_is.image) {
+        images_bytes = images_bytes + parseInt(kb);
+        image_links.push(url);
+    } else if(object_is.css) {
+        css_bytes = css_bytes + parseInt(kb);
+        css_links.push(url);
+    } else if(object_is.html) {
+        html_bytes = html_bytes + parseInt(kb);
+        html_links.push(url);
+    } else if(object_is.js) {
+        js_bytes = js_bytes + parseInt(kb);
+        js_links.push(url);
+    } else if(object_is.font) {
+        var font_name = url.substring(url.lastIndexOf("/") + 1);
+        if(font_name.endsWith("woff2") && fonts.hasOwnProperty(font_name.substring(0, font_name.length - 1))) {
+            var woff = font_name.substring(0, font_name.length - 1);
+            font_bytes = font_bytes - fonts[woff];
+            total_bytes = total_bytes - fonts[woff];
+            delete fonts[woff];
+            var delete_url = url.substring(0, url.length -1);
+            var index_delete = font_links.indexOf(delete_url);
+
+            if(index_delete > -1) {
+                font_links.splice(index_delete, 1);
+            }
+        } else if(font_name.endsWith("woff2") && fonts.hasOwnProperty(font_name.substring(0, font_name.length - 5) + "eot")) {
+            var eot = font_name.substring(0, font_name.length - 5) + "eot";
+            font_bytes = font_bytes - fonts[eot];
+            total_bytes = total_bytes - fonts[eot];
+            delete fonts[eot];
+
+            var delete_url = url.substring(0, url.length - 5) + "eot";
+            var index_delete = font_links.indexOf(delete_url);
+            if(index_delete > -1) {
+                font_links.splice(index_delete, 1);
+            }
+        } else if(font_name.endsWith("woff2") && fonts.hasOwnProperty(font_name.substring(0, font_name.length - 5) + "ttf")) {
+            var ttf = font_name.substring(0, font_name.length - 5) + "ttf";
+            font_bytes = font_bytes - fonts[ttf];
+            total_bytes = total_bytes - fonts[ttf];
+            delete fonts[ttf];
+
+            var delete_url = url.substring(0, url.length - 5) + "ttf";
+            var index_delete = font_links.indexOf(delete_url);
+            if(index_delete > -1) {
+                font_links.splice(index_delete, 1);
+            }
+        } else if(font_name.endsWith("woff") && fonts.hasOwnProperty(font_name + "2")) {
+            return;
+        } else if((font_name.endsWith("eot") || font_name.endsWith("ttf")) && fonts.hasOwnProperty(font_name.substring(0, font_name.length - 3) + "woff2")) {
+            return;
+        }
+
+        font_links.push(url);
+
+        fonts[font_name] = kb;
+        font_bytes = font_bytes + parseInt(kb);
+    }
+
+    total_bytes = total_bytes + parseInt(kb);
+
+    change_sizes();
+
+    if(typeof(next) == "function") {
+        next(args[0], args[1]);
+    }
 }
 
 function change_sizes() {
