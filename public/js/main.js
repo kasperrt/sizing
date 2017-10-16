@@ -127,6 +127,19 @@ function get_size_html(url, object_is, next, args) {
         success: function(msg){
             var bytes = xhr.getResponseHeader('Content-Length');
             var kb = bytes;
+            var content = xhr.getResponseHeader('Content-Type');
+
+            if(content != null || content != undefined) {
+                if(object_is.image == false && content.indexOf("image") > -1) {
+                    object_is.image = true;
+                } else if(object_is.js == false && content.indexOf("javascript") > -1) {
+                    object_is.js = true;
+                } else if(object_is.html == false && content.indexOf("html") > -1) {
+                    object_is.html = true;
+                } else if(object_is.css == false && content.indexOf("css") > -1) {
+                    object_is.css = true;
+                }
+            }
 
             if(bytes == undefined) {
                 $.ajax({
@@ -148,6 +161,7 @@ function get_size_html(url, object_is, next, args) {
 
 function handle_responses(kb, url, object_is, next, args) {
     //console.log(url, kb);
+    kb = parseInt(kb);
     if(object_is.image) {
         images_bytes = images_bytes + parseInt(kb);
         image_links.push(url);
@@ -364,17 +378,17 @@ function get_external_from_css(url, original_url) {
                     var response_class = response.substring(0, last_curly_index);
                     var _class = response_class.lastIndexOf(".");
                     var new_sub = response_class.substring(_class);
-
+                    new_sub = new_sub.replace(/\s/g,'')
                     if(new_sub.indexOf("#") > -1) {
                         var response_class = response.substring(0, last_curly_index);
                         var _id = response_class.lastIndexOf("#");
                         var new_sub = response_class.substring(_id);
-
-                        if(occurrences(full_html, new_sub.substring(1) < 1)) {
+                        new_sub = new_sub.replace(/\s/g,'');
+                        if(occurrences(full_html, new_sub.substring(1)) < 1) {
                             continue;
                         }
                     } else {
-                        if(occurrences(full_html, new_sub.substring(1) < 1)) {
+                        if(occurrences(full_html, new_sub.substring(1)) < 1) {
                             continue;
                         }
                     }
