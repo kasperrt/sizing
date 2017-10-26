@@ -521,6 +521,7 @@ function get_size_images(url, response) {
 
 
         var src = d.attr("src");
+        if(src == undefined) return;
         if(src.substring(0,2) == "//") {
             src = "http:" + src;
         }
